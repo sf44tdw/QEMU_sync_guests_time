@@ -1,12 +1,5 @@
 #!/bin/bash
 {
-	readonly START_UNIXTIME=$(date +%s)
- 	readonly CURRENT_PATH=$(pwd)
-	readonly YMD_VAL=$(date -d "@${START_UNIXTIME}" +%Y%m%d%H%M%S)
-	readonly XML_DUMP_DIRNAME="${CURRENT_PATH}/kvm_vmdump_${YMD_VAL}"
-  	
-	RETURN=0
-
 	cd || exit 1
 
 	readonly USER_BASH_PROFILE_PATH="${HOME}/.bash_profile"
@@ -19,9 +12,6 @@
 	else
 		exit 220
 	fi
-
-#このスクリプトの名前。
-readonly MY_NAME=$(basename "${0}")
 
 #ロックファイルのパス
 readonly _lockfile="/tmp/${MY_NAME}.lock"

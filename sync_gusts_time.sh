@@ -13,34 +13,33 @@
 		exit 220
 	fi
 
-#ロックファイルのパス
-readonly _lockfile="/tmp/${MY_NAME}.lock"
+	#ロックファイルのパス
+	readonly _lockfile="/tmp/${MY_NAME}.lock"
 
-function log_and_exit() {
-	local -r YMD_VAL=$(date +%Y%m%d%H%M%S)
-	echo "${YMD_VAL}_${1}_${3}" >>"${2}"
-	exit "${3}"
-}
+	function log_and_exit() {
+		local -r YMD_VAL=$(date +%Y%m%d%H%M%S)
+		echo "${YMD_VAL}_${1}_${3}" >>"${2}"
+		exit "${3}"
+	}
 
-readonly LOGDIR="/var/log/sync-guests-time-log"
-readonly LOGFILE="${LOGDIR}/$(date +%Y%m%d%H%M%S)_sync-guests-time.log"
-mkdir -p "${LOGDIR}" && chmod 755 "${LOGDIR}" || exit 100
+	readonly LOGDIR="/var/log/sync-guests-time-log"
+	readonly LOGFILE="${LOGDIR}/$(date +%Y%m%d%H%M%S)_sync-guests-time.log"
+	mkdir -p "${LOGDIR}" && chmod 755 "${LOGDIR}" || exit 100
 
-echo "$(date +%Y%m%d%H%M%S)_開始します。" >>"${LOGFILE}"
+	echo "$(date +%Y%m%d%H%M%S)_開始します。" >>"${LOGFILE}"
 
-#ロックファイル生成。
-echo "$(date +%Y%m%d%H%M%S)_ロックファイル生成。" >>"${LOGFILE}"
-exec 9>"${_lockfile}"
-if ! flock -n 9; then
-	log_and_exit "Cannot run multiple instance." 110
-fi
+	#ロックファイル生成。
+	echo "$(date +%Y%m%d%H%M%S)_ロックファイル生成。" >>"${LOGFILE}"
+	exec 9>"${_lockfile}"
+	if ! flock -n 9; then
+		log_and_exit "Cannot run multiple instance." 110
+	fi
 
-# ファイル更新日時が5000日を越えたログファイルを削除
-echo "$(date +%Y%m%d%H%M%S)_旧ログ削除。" >>"${LOGFILE}"
-readonly PARAM_DATE_NUM=5000
-find "${LOGDIR}" -name "*.log" -type f -mtime +"${PARAM_DATE_NUM}" -exec rm -f {} \;
+	# ファイル更新日時が5000日を越えたログファイルを削除
+	echo "$(date +%Y%m%d%H%M%S)_旧ログ削除。" >>"${LOGFILE}"
+	readonly PARAM_DATE_NUM=5000
+	find "${LOGDIR}" -name "*.log" -type f -mtime +"${PARAM_DATE_NUM}" -exec rm -f {} \;
 
-	
 	# VM一覧を取得（エラーハンドリング付き）
 	VM_LIST_SRC_TEMP=$(
 		export LANG=C
@@ -51,18 +50,18 @@ find "${LOGDIR}" -name "*.log" -type f -mtime +"${PARAM_DATE_NUM}" -exec rm -f {
 	readonly VM_LIST_SRC="${VM_LIST_SRC_TEMP}"
 	readonly VM_LIST=$(echo "${VM_LIST_SRC}" | grep -v "^$" | sed -e '1d' -e '2d' | awk -F" " '{print $2}' | sort | uniq)
 
-	readonly VM_RUNNING_LIST=$(echo "${VM_LIST_SRC}" | grep "${VM_RUNNING_STATE}"| grep -v "^$")
+	readonly VM_RUNNING_LIST=$(echo "${VM_LIST_SRC}" | grep "${VM_RUNNING_STATE}" | grep -v "^$")
 	readonly VM_RUNNING_COUNT=$(echo "${VM_RUNNING_LIST}" | grep -v "^$" | wc -l)
 	if [ 0 -eq "${VM_RUNNING_COUNT}" ]; then
-		echo "${VM_LIST_SRC_TEMP}"  >>"${LOGFILE}"
-    log_and_exit "VM IS NOT RUNNING. EXIT." 1
+		echo "${VM_LIST_SRC_TEMP}" >>"${LOGFILE}"
+		log_and_exit "VM IS NOT RUNNING. EXIT." 1
 	fi
 	readonly SORTED_VM_LIST="${VM_LIST}"
 
-for vm in ${SORTED_VM_LIST}; do
-    echo "Syncing ${vm}..." >>"${LOGFILE}" 2>&1
-    virsh domtime "${vm}" --sync >>"${LOGFILE}" 2>&1
-done
+	for vm in ${SORTED_VM_LIST}; do
+		echo "Syncing ${vm}..." >>"${LOGFILE}" 2>&1
+		virsh domtime "${vm}" --sync >>"${LOGFILE}" 2>&1
+	done
 
-log_and_exit "正常終了します。" "${LOGFILE}" 0
-  }
+	log_and_exit "正常終了します。" "${LOGFILE}" 0
+}

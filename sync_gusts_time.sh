@@ -16,14 +16,17 @@
 	#ロックファイルのパス
 	readonly _lockfile="/tmp/${MY_NAME}.lock"
 
+
+
+	readonly LOGDIR="/var/log/sync-guests-time-log"
+	readonly LOGFILE="${LOGDIR}/$(date +%Y%m%d%H%M%S)_sync-guests-time.log"
+
 	function log_and_exit() {
 		local -r YMD_VAL=$(date +%Y%m%d%H%M%S)
 		echo "${YMD_VAL}_${1}_${3}" >>"${2}"
 		exit "${3}"
 	}
 
-	readonly LOGDIR="/var/log/sync-guests-time-log"
-	readonly LOGFILE="${LOGDIR}/$(date +%Y%m%d%H%M%S)_sync-guests-time.log"
 	mkdir -p "${LOGDIR}" && chmod 755 "${LOGDIR}" || exit 100
 
 	echo "$(date +%Y%m%d%H%M%S)_開始します。" >>"${LOGFILE}"
@@ -32,12 +35,12 @@
 	echo "$(date +%Y%m%d%H%M%S)_ロックファイル生成。" >>"${LOGFILE}"
 	exec 9>"${_lockfile}"
 	if ! flock -n 9; then
-		log_and_exit "Cannot run multiple instance." 110
+		log_and_exit "Cannot run multiple instance." "${LOGFILE}" 110
 	fi
 
-	# ファイル更新日時が30日を越えたログファイルを削除(かなり高頻度で実行される可能性があるため。)
+	# ファイル更新日時が2日を越えたログファイルを削除(かなり高頻度で実行される可能性があるため。)
 	echo "$(date +%Y%m%d%H%M%S)_旧ログ削除。" >>"${LOGFILE}"
-	readonly PARAM_DATE_NUM=30
+	readonly PARAM_DATE_NUM=2
 	find "${LOGDIR}" -name "*.log" -type f -mtime +"${PARAM_DATE_NUM}" -exec rm -f {} \;
 
 	# VM一覧を取得（エラーハンドリング付き）
@@ -46,7 +49,7 @@
 		export LANG=C
 		virsh list --all | grep -v "^$"
 	) || {
-		log_and_exit "FAILED TO GET VM LIST. CHECK IF LIBVIRT IS RUNNING AND YOU HAVE PROPER PERMISSIONS." 10
+		log_and_exit "FAILED TO GET VM LIST. CHECK IF LIBVIRT IS RUNNING AND YOU HAVE PROPER PERMISSIONS." "${LOGFILE}" 10
 	}
 	readonly VM_LIST_SRC="${VM_LIST_SRC_TEMP}"
 
@@ -59,7 +62,7 @@
 
 	if [ 0 -eq "${VM_RUNNING_COUNT}" ]; then
 		echo "${VM_LIST_SRC_TEMP}" >>"${LOGFILE}"
-		log_and_exit "VM IS NOT RUNNING. EXIT." 1
+		log_and_exit "VM IS NOT RUNNING. EXIT." "${LOGFILE}" 1
 	fi
 	readonly SORTED_VM_LIST="${VM_LIST}"
 

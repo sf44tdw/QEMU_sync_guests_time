@@ -55,7 +55,7 @@
 	readonly VM_RUNNING_COUNT=$(echo "${VM_RUNNING_LIST}" | grep -v "^$" | wc -l)
 	
 	# 起動しているVMの名前を抽出し、重複を排除してソート
-	readonly VM_LIST=$(echo "${VM_RUNNING_LIST}" | grep -v "^$" | sed -e '1d' -e '2d' | awk -F" " '{print $2}' | sort | uniq)
+	readonly VM_LIST=$(echo "${VM_RUNNING_LIST}" | grep -v "^$" | awk '{print $2}' | sort | uniq)
 
 	if [ 0 -eq "${VM_RUNNING_COUNT}" ]; then
 		echo "${VM_LIST_SRC_TEMP}" >>"${LOGFILE}"

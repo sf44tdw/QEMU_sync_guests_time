@@ -35,9 +35,9 @@
 		log_and_exit "Cannot run multiple instance." 110
 	fi
 
-	# ファイル更新日時が5000日を越えたログファイルを削除
+	# ファイル更新日時が30日を越えたログファイルを削除(かなり高頻度で実行される可能性があるため。)
 	echo "$(date +%Y%m%d%H%M%S)_旧ログ削除。" >>"${LOGFILE}"
-	readonly PARAM_DATE_NUM=5000
+	readonly PARAM_DATE_NUM=30
 	find "${LOGDIR}" -name "*.log" -type f -mtime +"${PARAM_DATE_NUM}" -exec rm -f {} \;
 
 	# VM一覧を取得（エラーハンドリング付き）
